@@ -18,7 +18,8 @@ gulp.task('changelog', function(callback) {
   return changelog({
     repository: pkg.repository.url,
     version: pkg.version,
-    file: paths.doc + '/CHANGELOG.md'
+    file: paths.doc + '/CHANGELOG.md',
+    preset: 'angular'
   }, function(err, log) {
     fs.writeFileSync(paths.doc + '/CHANGELOG.md', log);
   });
@@ -31,13 +32,10 @@ gulp.task('copy-build-to-dist', function() {
 
 gulp.task('prepare-release', function(callback){
   return runSequence(
-    'build',
-    'build-tsd',
-    'copy-build-to-dist',
-    'lint',
     'bump-version',
-    'doc',
-    'changelog',
+    //'doc',
+    //'changelog',
+    'export',
     callback
   );
 });
