@@ -52,36 +52,36 @@ export interface ISpecificReader {
    * Name of the associated element. Mighe be undefined if not relevant.
    */
   name: string;
-  
+
   /**
    * Element from DOM which is used by the reader. Mighe be undefined if reader is not using DOM
    * to parse options.
    */
   element: HTMLElement;
-  
+
   /**
    * Get reader basing on provided selector.
    * Always returns some reader, never throws exception.
    */
   get(selector: string): ISpecificReader;
-  
+
   /**
    * Gets all element readers basing on provided selector.
    * Always returns an array, never throws exception.
    */
   getAll(selector: string): ISpecificReader[];
-  
+
   /**
    * Gets all properties. In case of node it will return all atributes,
    * and in case of code based option it will return all properties.
    * Always returns an array, never throws exception.
    */
   getAllProperties(): ISpecificReader[];
-  
+
   /**
    * Evaluates current reader.
    */
-  evaluate(): any; // TODO: defaultValue?
+  evaluate(defaultValue?: any): any;
 }
 
 export class CodeBasedPropertyReader implements ISpecificReader {
@@ -112,8 +112,9 @@ export class CodeBasedPropertyReader implements ISpecificReader {
     }
   }
 
-  evaluate(): any {
-    return this._resources.codeBasedOptions[this._propertyName];
+  evaluate(defaultValue?: any): any {
+    let result = this._resources.codeBasedOptions[this._propertyName]; 
+    return result === undefined ? defaultValue : result;
   }
 }
 
@@ -198,15 +199,17 @@ export class AttributeReader implements ISpecificReader {
     throw new Error('Attribute cannot have any property.');
   }
 
-  evaluate(): any {
+  evaluate(defaultValue?: any): any {
     if (!this._isExpression) {
       return this._value;
     }
 
-    return this._resources.bindingEngine.parseExpression(this._value).evaluate({
+    let result = this._resources.bindingEngine.parseExpression(this._value).evaluate({
       bindingContext: this._resources.bindingContext,
       overrideContext: undefined
     }, undefined);
+
+    return result === undefined ? defaultValue : result;
   }
 }
 
@@ -227,8 +230,8 @@ export class UndefinedElementReader implements ISpecificReader {
     return [];
   }
 
-  evaluate(): any {
-    return undefined;
+  evaluate(defaultValue?: any): any {
+    return defaultValue;
   }
 }
 
@@ -264,7 +267,7 @@ function getReaderFromCode(properties: string[], element: HTMLElement, resources
   while (propertyIndex < properties.length) {
     currentPropertyName = Utils.convertFromDashToLowerCamelCaseNotation(properties[propertyIndex]);
 
-    if ((currentPropertyName in currentOption) === false) {
+    if (typeof currentOption !== 'object' || (currentPropertyName in currentOption) === false) {
       return undefined;
     }
 
@@ -345,7 +348,7 @@ function getAllReadersFromCode(properties: string[], element: HTMLElement, resou
   while (propertyIndex < properties.length - 1) {
     currentPropertyName = Utils.convertFromDashToLowerCamelCaseNotation(properties[propertyIndex]);
 
-    if ((currentPropertyName in currentOption) === false) {
+    if (typeof currentOption !== 'object' || (currentPropertyName in currentOption) === false) {
       return undefined;
     }
 
@@ -426,10 +429,10 @@ function getAttribute(element: HTMLElement, name: string) {
   const oneTime = '.one-time';
 
   if (element.hasAttribute(name)) {
-    let value = element.getAttribute(name);    
+    let value = element.getAttribute(name);
     let isExpression = false;
     let shortName = name;
-    
+
     if (Utils.endsWith(name, bind)) {
       isExpression = true;
       shortName = name.substr(0, name.length - bind.length);
@@ -446,7 +449,7 @@ function getAttribute(element: HTMLElement, name: string) {
   }
 
   let value = element.getAttribute(name + bind) || element.getAttribute(name + oneTime);
-  if (value !== null) {  
+  if (value !== null) {
     return {
       name: name,
       value: value,

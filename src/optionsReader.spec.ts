@@ -104,7 +104,36 @@ describe('DOMSettingsReader', () => {
       let reader = factory.create({ value: 30 }, getHTMLElement('<m-component><pagination size.bind="value"></pagination></m-component>'), codeBased);
       expect(reader.get('pagination').get('size').evaluate()).toBe(30);
     });
+    
+    it('should allow to evaluate with default value for code based options', () => {
+      let codeBased = { pagination: { size: 20 } };
+      let reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
+      expect(reader.get('pagination').get('size').evaluate(10)).toBe(20);
+      expect(reader.get('pagination size').evaluate(10)).toBe(20);
+      expect(reader.get('pagination').get('foo').evaluate(10)).toBe(10);
+      expect(reader.get('pagination foo').evaluate(10)).toBe(10);
+      expect(reader.get('bar').evaluate(10)).toBe(10);
+    });
+    
+    it('should allow to evaluate with default value for DOM based options', () => {
+      let reader = factory.create({}, getHTMLElement('<m-component><pagination size.bind="20"></pagination></m-component>'), {});
+      expect(reader.get('pagination').get('size').evaluate(10)).toBe(20);
+      expect(reader.get('pagination size').evaluate(10)).toBe(20);
+      expect(reader.get('pagination').get('foo').evaluate(10)).toBe(10);
+      expect(reader.get('pagination foo').evaluate(10)).toBe(10);
+      expect(reader.get('bar').evaluate(10)).toBe(10);
+    });
+    
+    it('should allow to use primitive types in code based options', () => {
+      let codeBased = { foo: true };
+      let reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
 
+      let options = reader.get('foo');
+
+      expect(options.defined).toBe(true);
+      expect(options.get('test').evaluate()).toBe(undefined);
+    });
+    
     it('should throw on one-way and two-way bindings', () => {
       expect(() => {
         factory.create({}, getHTMLElement('<m-component><pagination size.one-way="value"></pagination></m-component>'))
