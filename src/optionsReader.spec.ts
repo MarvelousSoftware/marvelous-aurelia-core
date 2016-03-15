@@ -270,20 +270,26 @@ describe('DOMSettingsReader', () => {
     });
 
     it('should support code based options', () => {
-      let codeBased = { foo: [{ value: 40 }, { value: 50 }] };
+      let bar1 = { value: 40 };
+      let bar2 = { value: 50 };
+      let codeBased = { foo: [bar1, bar2] };
       let reader = factory.create({ first: 10, second: 20, third: 30 }, getHTMLElement('<m-component></m-component>'), codeBased);
 
       let options = reader.get('foo').getAll('bar');
 
       expect(options.length).toBe(2);
       expect(options[0].get('value').evaluate()).toBe(40);
+      expect(options[0].evaluate()).toBe(bar1);
       expect(options[1].get('value').evaluate()).toBe(50);
+      expect(options[1].evaluate()).toBe(bar2);
 
       options = reader.getAll('foo bar');
 
       expect(options.length).toBe(2);
       expect(options[0].get('value').evaluate()).toBe(40);
+      expect(options[0].evaluate()).toBe(bar1);
       expect(options[1].get('value').evaluate()).toBe(50);
+      expect(options[1].evaluate()).toBe(bar2);
     });
 
     it('should have higher priority for code based options', () => {
@@ -298,16 +304,18 @@ describe('DOMSettingsReader', () => {
       expect(options[0].get('value').evaluate()).toBe(40);
       expect(options[1].get('value').evaluate()).toBe(50);
     });
-
-    it('should throw in case of array item evaluation', () => {
-      let codeBased = { foo: [{ value: 40 }, { value: 50 }] };
-      let reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
+    
+    it('should support empty array in undefined option', () => {
+      let codeBased = {};
+      let reader = factory.create({ first: 10, second: 20, third: 30 }, getHTMLElement(
+        '<m-component></m-component>'),
+        codeBased);
 
       let options = reader.get('foo').getAll('bar');
 
-      expect(() => options[0].evaluate()).toThrowError(`Array item cannot be evaluated. Only properties are evaluable.`);
+      expect(options.length).toBe(0);
     });
-
+    
     it('should throw in case of attribute', () => {
       let reader = factory.create({}, getHTMLElement(
         '<m-component><foo value="10"></foo></m-component>'));

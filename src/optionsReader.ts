@@ -156,7 +156,7 @@ export class CodeBasedArrayItemReader implements ISpecificReader {
   }
 
   evaluate(): any {
-    throw new Error(`Array item cannot be evaluated. Only properties are evaluable.`);
+    return this._item;
   }
 }
 
@@ -235,7 +235,7 @@ export class UndefinedElementReader implements ISpecificReader {
   }
 
   getAll(selector: string): ISpecificReader[] {
-    return [this];
+    return [];
   }
 
   getAllProperties(): ISpecificReader[] {
