@@ -47,7 +47,14 @@ export interface ISpecificReader {
    * if(pagination.defined === false) throw new Error();
    */
   defined: boolean;
-
+  
+  /**
+   * Is true if defined. In case of code property it also checks whether it evaluates to a truthy value.
+   * This is especially helpful for checking whether particular component is enabled. For instance in the following configuration:
+   * `{ pagination: false }` - `pagination` is defined, but it is not truthy and therefore component shouldn't be enabled. 
+   */
+  truthy: boolean;
+  
   /**
    * Name of the associated element. Mighe be undefined if not relevant.
    */
@@ -87,6 +94,7 @@ export interface ISpecificReader {
 export class CodeBasedPropertyReader implements ISpecificReader {
   get defined() { return true; }
   get name() { return this._propertyName; }
+  get truthy() { return !!this.evaluate(); }
 
   constructor(private _propertyName: string, public element: HTMLElement, private _resources: IReaderResources) {
   }
@@ -121,6 +129,7 @@ export class CodeBasedPropertyReader implements ISpecificReader {
 export class CodeBasedArrayItemReader implements ISpecificReader {
   get defined() { return true; }
   get name() { return undefined; }
+  get truthy() { return true; }
 
   constructor(private _item: any, public element: HTMLElement, private _resources: IReaderResources) {
   }
@@ -154,6 +163,7 @@ export class CodeBasedArrayItemReader implements ISpecificReader {
 export class ElementReader implements ISpecificReader {
   get defined() { return true; }
   get name() { return undefined; }
+  get truthy() { return true; }
 
   constructor(public element: HTMLElement, private _resources: IReaderResources) {
   }
@@ -183,6 +193,7 @@ export class ElementReader implements ISpecificReader {
 export class AttributeReader implements ISpecificReader {
   get defined() { return true; }
   get element() { return undefined; }
+  get truthy() { return true; }
 
   constructor(public name: string, private _value: any, private _isExpression: boolean, private _resources: IReaderResources) {
   }
@@ -217,7 +228,8 @@ export class UndefinedElementReader implements ISpecificReader {
   get defined() { return false; }
   get name() { return undefined; }
   get element() { return undefined; }
-
+  get truthy() { return false; }
+  
   get(selector: string): ISpecificReader {
     return this;
   }

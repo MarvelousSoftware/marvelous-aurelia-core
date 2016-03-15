@@ -27,7 +27,7 @@ describe('DOMSettingsReader', () => {
     it('should point to proper element', () => {
       let html = getHTMLElement('<m-component><components><pagination size="20"></pagination></components></m-component>');
       let reader = factory.create({}, html);
-      
+
       expect(reader.get('components').element).toBe(html.querySelector('components'));
     });
 
@@ -35,9 +35,9 @@ describe('DOMSettingsReader', () => {
       let codeBased = { dataSource: { mode: 'serverSide' } };
       let domBased = getHTMLElement('<m-component><columns><column name="foo"></column></columns></m-component>');
       let reader = factory.create({}, domBased);
-      
+
       let columns = reader.getAll('columns column');
-      
+
       expect(columns.length).toBe(1);
       expect(columns[0].get('name').evaluate()).toBe('foo');
     });
@@ -104,7 +104,7 @@ describe('DOMSettingsReader', () => {
       let reader = factory.create({ value: 30 }, getHTMLElement('<m-component><pagination size.bind="value"></pagination></m-component>'), codeBased);
       expect(reader.get('pagination').get('size').evaluate()).toBe(30);
     });
-    
+
     it('should allow to evaluate with default value for code based options', () => {
       let codeBased = { pagination: { size: 20 } };
       let reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
@@ -114,7 +114,7 @@ describe('DOMSettingsReader', () => {
       expect(reader.get('pagination foo').evaluate(10)).toBe(10);
       expect(reader.get('bar').evaluate(10)).toBe(10);
     });
-    
+
     it('should allow to evaluate with default value for DOM based options', () => {
       let reader = factory.create({}, getHTMLElement('<m-component><pagination size.bind="20"></pagination></m-component>'), {});
       expect(reader.get('pagination').get('size').evaluate(10)).toBe(20);
@@ -123,7 +123,7 @@ describe('DOMSettingsReader', () => {
       expect(reader.get('pagination foo').evaluate(10)).toBe(10);
       expect(reader.get('bar').evaluate(10)).toBe(10);
     });
-    
+
     it('should allow to use primitive types in code based options', () => {
       let codeBased = { foo: true };
       let reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
@@ -133,7 +133,7 @@ describe('DOMSettingsReader', () => {
       expect(options.defined).toBe(true);
       expect(options.get('test').evaluate()).toBe(undefined);
     });
-    
+
     it('should throw on one-way and two-way bindings', () => {
       expect(() => {
         factory.create({}, getHTMLElement('<m-component><pagination size.one-way="value"></pagination></m-component>'))
@@ -188,6 +188,49 @@ describe('DOMSettingsReader', () => {
       expect(() => { reader.get('foo').get('') }).toThrowError(`Empty selector for FOO element.`);
     });
   });
+
+  describe('truthy property', () => {
+    describe('in case of HTML based options', () => {
+      it('should be true for empty attribute', () => {
+        let reader = factory.create({}, getHTMLElement('<m-component><foo bar></foo></m-component>'));
+        expect(reader.get('foo bar').truthy).toBe(true);
+      });
+
+      it('should be false for undefined attribute', () => {
+        let reader = factory.create({}, getHTMLElement('<m-component><foo></foo></m-component>'));
+        expect(reader.get('foo bar').truthy).toBe(false);
+      });
+
+      it('should be true for node', () => {
+        let reader = factory.create({}, getHTMLElement('<m-component><foo></foo></m-component>'));
+        expect(reader.get('foo').truthy).toBe(true);
+      });
+
+      it('should be false for undefined node', () => {
+        let reader = factory.create({}, getHTMLElement('<m-component></m-component>'));
+        expect(reader.get('foo').truthy).toBe(false);
+      });
+    });
+    describe('in case of code based options', () => {
+      it('should be true for truthy value', () => {
+        let reader = factory.create({}, getHTMLElement(''), { foo: { bar: true } });
+        expect(reader.get('foo bar').truthy).toBe(true);
+        expect(reader.get('foo').truthy).toBe(true);
+      });
+      
+      it('should be true for array item', () => {
+        let reader = factory.create({}, getHTMLElement(''), { foo: [{ bar: true }] });
+        expect(reader.getAll('foo test')[0].truthy).toBe(true);
+      });
+
+      it('should be false for falsy value', () => {
+        let reader = factory.create({}, getHTMLElement(''), { foo: { bar: null, bar2: 0 } });
+        expect(reader.get('foo bar').truthy).toBe(false);
+        expect(reader.get('foo bar2').truthy).toBe(false);
+        expect(reader.get('bar').truthy).toBe(false);
+      });
+    });
+  })
 
   describe('getAll method', () => {
     it('should resolve all elements', () => {
@@ -293,7 +336,7 @@ describe('DOMSettingsReader', () => {
       expect(props[1].evaluate()).toBe('20');
       expect(props[1].name).toBe('other');
     });
-    
+
     it('should allow to get properties from node even when code based are defined', () => {
       let codeBased = { test: 1 };
       let reader = factory.create({ first: 10 }, getHTMLElement(
@@ -308,7 +351,7 @@ describe('DOMSettingsReader', () => {
       expect(props[1].evaluate()).toBe('20');
       expect(props[1].name).toBe('other');
     });
-    
+
     it('should allow to get properties from node even when code based are defined and getAll is used', () => {
       let codeBased = { test: 1 };
       let reader = factory.create({ first: 10 }, getHTMLElement(
