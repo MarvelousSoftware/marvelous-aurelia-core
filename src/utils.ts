@@ -371,13 +371,13 @@ export class Utils {
     return result;
   }
 
-  static property(propertyExpression: string): string;
-  static property(propertyExpression: (x: any) => any): string;
   /**
    * Gets property name from function. Inspired by C#'s expression tree based solution. ;)
    */
   static property<T>(propertyExpression: (x: T) => any): string;
   static property<T>(propertyExpression: string): string;
+  static property(propertyExpression: string): string;
+  static property(propertyExpression: (x: any) => any): string;
   static property<T>(propertyExpression: ((x: T) => any) | string): string {
     let regexp = /function[^\(]*\(([^\)]*)\)[^\{]*\{[\s\S]*return[ ]+(\1|.+)(?:\.([^;]*)|\[['"]([^;]*)['"]\]);?[\s\S]*\}/i;
     let expression = propertyExpression.toString();
@@ -390,6 +390,24 @@ export class Utils {
     // 3 in case of `this.foo`
     // 4 in case of `this['foo']`
     return matches[3] || matches[4];
+  }
+  
+  static accessor(accessor: string): string;
+  static accessor<T>(accessor: (x: T) => any): string;
+  static accessor<T>(accessor: ((x: T) => any) | string): string {
+    if(typeof accessor == "string") {
+      return <string>accessor;
+    }
+    
+    let regexp = /function\s*\((\w+)\)\s*{[\s\S]*?return.*\s\1\s*.\s*([\w.]+)/im;
+    let expression = accessor.toString();
+    let matches = regexp.exec(expression);
+
+    if (!matches || matches.length !== 3) {
+      throw new Error(`Invalid expression: "${expression}". It should be an accessor, but it isn't.`);
+    }
+    
+    return matches[2];
   }
 }
 
