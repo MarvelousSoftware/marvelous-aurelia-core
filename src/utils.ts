@@ -308,7 +308,7 @@ export class Utils {
     return lastIndex !== -1 && lastIndex === position;
   }
 
-  static createReadFunction(promiseOrUrlOrData, options: ICreateReadFunctionOptions = { allowData: true }) {
+  static createReadFunction(promiseOrUrlOrData, options: ICreateReadFunctionOptions = { allowData: true }): (context:any)=>Promise<any> {
     options.params = options.params || (x => x);
     
     if (promiseOrUrlOrData instanceof Function) {
