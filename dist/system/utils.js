@@ -355,6 +355,18 @@ System.register([], function(exports_1, context_1) {
                     // 4 in case of `this['foo']`
                     return matches[3] || matches[4];
                 };
+                Utils.accessor = function (accessor) {
+                    if (typeof accessor == "string") {
+                        return accessor;
+                    }
+                    var regexp = /function\s*\((\w+)\)\s*{[\s\S]*?return.*\s\1\s*.\s*([\w.]+)/im;
+                    var expression = accessor.toString();
+                    var matches = regexp.exec(expression);
+                    if (!matches || matches.length !== 3) {
+                        throw new Error("Invalid expression: \"" + expression + "\". It should be an accessor, but it isn't.");
+                    }
+                    return matches[2];
+                };
                 return Utils;
             }());
             exports_1("Utils", Utils);

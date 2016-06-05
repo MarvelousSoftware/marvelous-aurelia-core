@@ -74,16 +74,18 @@ declare module "marvelous-aurelia-core/utils" {
 	    static convertFromDashToLowerCamelCaseNotation(name: string): string;
 	    static convertFromLowerCamelCaseToDashNotation(str: any): any;
 	    static endsWith(subjectString: string, searchString: string): boolean;
-	    static createReadFunction(promiseOrUrlOrData: any, options?: ICreateReadFunctionOptions): any;
+	    static createReadFunction(promiseOrUrlOrData: any, options?: ICreateReadFunctionOptions): (context: any) => Promise<any>;
 	    static forOwn(obj: any, action: (value: any, key: string | number) => boolean | void): void;
 	    static flatten<T>(items: T[][]): T[];
-	    static property(propertyExpression: string): string;
-	    static property(propertyExpression: (x: any) => any): string;
 	    /**
 	     * Gets property name from function. Inspired by C#'s expression tree based solution. ;)
 	     */
 	    static property<T>(propertyExpression: (x: T) => any): string;
 	    static property<T>(propertyExpression: string): string;
+	    static property(propertyExpression: string): string;
+	    static property(propertyExpression: (x: any) => any): string;
+	    static accessor(accessor: string): string;
+	    static accessor<T>(accessor: (x: T) => any): string;
 	}
 	export interface ICreateReadFunctionOptions {
 	    allowData: boolean;
@@ -125,6 +127,12 @@ declare module "marvelous-aurelia-core/optionsReader" {
 	     */
 	    defined: boolean;
 	    /**
+	     * Is true if defined. In case of code property it also checks whether it evaluates to a truthy value.
+	     * This is especially helpful for checking whether particular component is enabled. For instance in the following configuration:
+	     * `{ pagination: false }` - `pagination` is defined, but it is not truthy and therefore component shouldn't be enabled.
+	     */
+	    truthy: boolean;
+	    /**
 	     * Name of the associated element. Mighe be undefined if not relevant.
 	     */
 	    name: string;
@@ -152,7 +160,7 @@ declare module "marvelous-aurelia-core/optionsReader" {
 	    /**
 	     * Evaluates current reader.
 	     */
-	    evaluate(): any;
+	    evaluate(defaultValue?: any): any;
 	}
 	export class CodeBasedPropertyReader implements ISpecificReader {
 	    private _propertyName;
@@ -160,12 +168,13 @@ declare module "marvelous-aurelia-core/optionsReader" {
 	    private _resources;
 	    defined: boolean;
 	    name: string;
+	    truthy: boolean;
 	    constructor(_propertyName: string, element: HTMLElement, _resources: IReaderResources);
 	    get(selector: string): ISpecificReader;
 	    getAll(selector: string): ISpecificReader[];
 	    getAllProperties(): ISpecificReader[];
 	    private _createInnerResources();
-	    evaluate(): any;
+	    evaluate(defaultValue?: any): any;
 	}
 	export class CodeBasedArrayItemReader implements ISpecificReader {
 	    private _item;
@@ -173,6 +182,7 @@ declare module "marvelous-aurelia-core/optionsReader" {
 	    private _resources;
 	    defined: boolean;
 	    name: any;
+	    truthy: boolean;
 	    constructor(_item: any, element: HTMLElement, _resources: IReaderResources);
 	    get(selector: string): ISpecificReader;
 	    getAll(selector: string): ISpecificReader[];
@@ -185,6 +195,7 @@ declare module "marvelous-aurelia-core/optionsReader" {
 	    private _resources;
 	    defined: boolean;
 	    name: any;
+	    truthy: boolean;
 	    constructor(element: HTMLElement, _resources: IReaderResources);
 	    get(selector: string): ISpecificReader;
 	    getAll(selector: string): ISpecificReader[];
@@ -198,20 +209,22 @@ declare module "marvelous-aurelia-core/optionsReader" {
 	    private _resources;
 	    defined: boolean;
 	    element: any;
+	    truthy: boolean;
 	    constructor(name: string, _value: any, _isExpression: boolean, _resources: IReaderResources);
 	    get(selector: string): ISpecificReader;
 	    getAll(selector: string): ISpecificReader[];
 	    getAllProperties(): ISpecificReader[];
-	    evaluate(): any;
+	    evaluate(defaultValue?: any): any;
 	}
 	export class UndefinedElementReader implements ISpecificReader {
 	    defined: boolean;
 	    name: any;
 	    element: any;
+	    truthy: boolean;
 	    get(selector: string): ISpecificReader;
 	    getAll(selector: string): ISpecificReader[];
 	    getAllProperties(): ISpecificReader[];
-	    evaluate(): any;
+	    evaluate(defaultValue?: any): any;
 	}
 }
 declare module "marvelous-aurelia-core/pubsub" {

@@ -1,22 +1,8 @@
-System.register(['./optionsReader', './pubsub'], function(exports_1, context_1) {
+define(["require", "exports", './optionsReader', './pubsub'], function (require, exports, optionsReader_1, pubsub_1) {
     "use strict";
-    var __moduleName = context_1 && context_1.id;
-    function exportStar_1(m) {
-        var exports = {};
-        for(var n in m) {
-            if (n !== "default") exports[n] = m[n];
-        }
-        exports_1(exports);
+    function __export(m) {
+        for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
     }
-    return {
-        setters:[
-            function (optionsReader_1_1) {
-                exportStar_1(optionsReader_1_1);
-            },
-            function (pubsub_1_1) {
-                exportStar_1(pubsub_1_1);
-            }],
-        execute: function() {
-        }
-    }
+    __export(optionsReader_1);
+    __export(pubsub_1);
 });

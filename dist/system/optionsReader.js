@@ -35,7 +35,7 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
         var parentOption;
         while (propertyIndex < properties.length) {
             currentPropertyName = utils_1.Utils.convertFromDashToLowerCamelCaseNotation(properties[propertyIndex]);
-            if ((currentPropertyName in currentOption) === false) {
+            if (typeof currentOption !== 'object' || (currentPropertyName in currentOption) === false) {
                 return undefined;
             }
             parentOption = currentOption;
@@ -101,7 +101,7 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
         // that's why `properties.length - 1`
         while (propertyIndex < properties.length - 1) {
             currentPropertyName = utils_1.Utils.convertFromDashToLowerCamelCaseNotation(properties[propertyIndex]);
-            if ((currentPropertyName in currentOption) === false) {
+            if (typeof currentOption !== 'object' || (currentPropertyName in currentOption) === false) {
                 return undefined;
             }
             parentOption = currentOption;
@@ -259,6 +259,11 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(CodeBasedPropertyReader.prototype, "truthy", {
+                    get: function () { return !!this.evaluate(); },
+                    enumerable: true,
+                    configurable: true
+                });
                 CodeBasedPropertyReader.prototype.get = function (selector) {
                     return getReaderBySelector(selector, this.element, this._createInnerResources());
                 };
@@ -276,8 +281,9 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                         parent: this._resources
                     };
                 };
-                CodeBasedPropertyReader.prototype.evaluate = function () {
-                    return this._resources.codeBasedOptions[this._propertyName];
+                CodeBasedPropertyReader.prototype.evaluate = function (defaultValue) {
+                    var result = this._resources.codeBasedOptions[this._propertyName];
+                    return result === undefined ? defaultValue : result;
                 };
                 return CodeBasedPropertyReader;
             }());
@@ -295,6 +301,11 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                 });
                 Object.defineProperty(CodeBasedArrayItemReader.prototype, "name", {
                     get: function () { return undefined; },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(CodeBasedArrayItemReader.prototype, "truthy", {
+                    get: function () { return true; },
                     enumerable: true,
                     configurable: true
                 });
@@ -316,7 +327,7 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                     };
                 };
                 CodeBasedArrayItemReader.prototype.evaluate = function () {
-                    throw new Error("Array item cannot be evaluated. Only properties are evaluable.");
+                    return this._item;
                 };
                 return CodeBasedArrayItemReader;
             }());
@@ -333,6 +344,11 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                 });
                 Object.defineProperty(ElementReader.prototype, "name", {
                     get: function () { return undefined; },
+                    enumerable: true,
+                    configurable: true
+                });
+                Object.defineProperty(ElementReader.prototype, "truthy", {
+                    get: function () { return true; },
                     enumerable: true,
                     configurable: true
                 });
@@ -373,6 +389,11 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(AttributeReader.prototype, "truthy", {
+                    get: function () { return true; },
+                    enumerable: true,
+                    configurable: true
+                });
                 AttributeReader.prototype.get = function (selector) {
                     throw new Error('Attribute cannot have any nested options.');
                 };
@@ -382,14 +403,15 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                 AttributeReader.prototype.getAllProperties = function () {
                     throw new Error('Attribute cannot have any property.');
                 };
-                AttributeReader.prototype.evaluate = function () {
+                AttributeReader.prototype.evaluate = function (defaultValue) {
                     if (!this._isExpression) {
                         return this._value;
                     }
-                    return this._resources.bindingEngine.parseExpression(this._value).evaluate({
+                    var result = this._resources.bindingEngine.parseExpression(this._value).evaluate({
                         bindingContext: this._resources.bindingContext,
                         overrideContext: undefined
                     }, undefined);
+                    return result === undefined ? defaultValue : result;
                 };
                 return AttributeReader;
             }());
@@ -412,17 +434,22 @@ System.register(['aurelia-dependency-injection', 'aurelia-binding', './utils'], 
                     enumerable: true,
                     configurable: true
                 });
+                Object.defineProperty(UndefinedElementReader.prototype, "truthy", {
+                    get: function () { return false; },
+                    enumerable: true,
+                    configurable: true
+                });
                 UndefinedElementReader.prototype.get = function (selector) {
                     return this;
                 };
                 UndefinedElementReader.prototype.getAll = function (selector) {
-                    return [this];
+                    return [];
                 };
                 UndefinedElementReader.prototype.getAllProperties = function () {
                     return [];
                 };
-                UndefinedElementReader.prototype.evaluate = function () {
-                    return undefined;
+                UndefinedElementReader.prototype.evaluate = function (defaultValue) {
+                    return defaultValue;
                 };
                 return UndefinedElementReader;
             }());

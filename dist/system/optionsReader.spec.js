@@ -94,6 +94,30 @@ System.register(['aurelia-dependency-injection', 'aurelia-pal-browser', './optio
                         var reader = factory.create({ value: 30 }, getHTMLElement('<m-component><pagination size.bind="value"></pagination></m-component>'), codeBased);
                         expect(reader.get('pagination').get('size').evaluate()).toBe(30);
                     });
+                    it('should allow to evaluate with default value for code based options', function () {
+                        var codeBased = { pagination: { size: 20 } };
+                        var reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
+                        expect(reader.get('pagination').get('size').evaluate(10)).toBe(20);
+                        expect(reader.get('pagination size').evaluate(10)).toBe(20);
+                        expect(reader.get('pagination').get('foo').evaluate(10)).toBe(10);
+                        expect(reader.get('pagination foo').evaluate(10)).toBe(10);
+                        expect(reader.get('bar').evaluate(10)).toBe(10);
+                    });
+                    it('should allow to evaluate with default value for DOM based options', function () {
+                        var reader = factory.create({}, getHTMLElement('<m-component><pagination size.bind="20"></pagination></m-component>'), {});
+                        expect(reader.get('pagination').get('size').evaluate(10)).toBe(20);
+                        expect(reader.get('pagination size').evaluate(10)).toBe(20);
+                        expect(reader.get('pagination').get('foo').evaluate(10)).toBe(10);
+                        expect(reader.get('pagination foo').evaluate(10)).toBe(10);
+                        expect(reader.get('bar').evaluate(10)).toBe(10);
+                    });
+                    it('should allow to use primitive types in code based options', function () {
+                        var codeBased = { foo: true };
+                        var reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
+                        var options = reader.get('foo');
+                        expect(options.defined).toBe(true);
+                        expect(options.get('test').evaluate()).toBe(undefined);
+                    });
                     it('should throw on one-way and two-way bindings', function () {
                         expect(function () {
                             factory.create({}, getHTMLElement('<m-component><pagination size.one-way="value"></pagination></m-component>'))
@@ -138,6 +162,43 @@ System.register(['aurelia-dependency-injection', 'aurelia-pal-browser', './optio
                         expect(function () { reader.get('foo').get(''); }).toThrowError("Empty selector for FOO element.");
                     });
                 });
+                describe('truthy property', function () {
+                    describe('in case of HTML based options', function () {
+                        it('should be true for empty attribute', function () {
+                            var reader = factory.create({}, getHTMLElement('<m-component><foo bar></foo></m-component>'));
+                            expect(reader.get('foo bar').truthy).toBe(true);
+                        });
+                        it('should be false for undefined attribute', function () {
+                            var reader = factory.create({}, getHTMLElement('<m-component><foo></foo></m-component>'));
+                            expect(reader.get('foo bar').truthy).toBe(false);
+                        });
+                        it('should be true for node', function () {
+                            var reader = factory.create({}, getHTMLElement('<m-component><foo></foo></m-component>'));
+                            expect(reader.get('foo').truthy).toBe(true);
+                        });
+                        it('should be false for undefined node', function () {
+                            var reader = factory.create({}, getHTMLElement('<m-component></m-component>'));
+                            expect(reader.get('foo').truthy).toBe(false);
+                        });
+                    });
+                    describe('in case of code based options', function () {
+                        it('should be true for truthy value', function () {
+                            var reader = factory.create({}, getHTMLElement(''), { foo: { bar: true } });
+                            expect(reader.get('foo bar').truthy).toBe(true);
+                            expect(reader.get('foo').truthy).toBe(true);
+                        });
+                        it('should be true for array item', function () {
+                            var reader = factory.create({}, getHTMLElement(''), { foo: [{ bar: true }] });
+                            expect(reader.getAll('foo test')[0].truthy).toBe(true);
+                        });
+                        it('should be false for falsy value', function () {
+                            var reader = factory.create({}, getHTMLElement(''), { foo: { bar: null, bar2: 0 } });
+                            expect(reader.get('foo bar').truthy).toBe(false);
+                            expect(reader.get('foo bar2').truthy).toBe(false);
+                            expect(reader.get('bar').truthy).toBe(false);
+                        });
+                    });
+                });
                 describe('getAll method', function () {
                     it('should resolve all elements', function () {
                         var reader = factory.create({}, getHTMLElement('<m-component><foo><bar value="1"></bar><bar value="2"></bar><bar value="3"></bar></foo></m-component>'));
@@ -164,16 +225,22 @@ System.register(['aurelia-dependency-injection', 'aurelia-pal-browser', './optio
                         expect(options[2].get('value').evaluate()).toBe(30);
                     });
                     it('should support code based options', function () {
-                        var codeBased = { foo: [{ value: 40 }, { value: 50 }] };
+                        var bar1 = { value: 40 };
+                        var bar2 = { value: 50 };
+                        var codeBased = { foo: [bar1, bar2] };
                         var reader = factory.create({ first: 10, second: 20, third: 30 }, getHTMLElement('<m-component></m-component>'), codeBased);
                         var options = reader.get('foo').getAll('bar');
                         expect(options.length).toBe(2);
                         expect(options[0].get('value').evaluate()).toBe(40);
+                        expect(options[0].evaluate()).toBe(bar1);
                         expect(options[1].get('value').evaluate()).toBe(50);
+                        expect(options[1].evaluate()).toBe(bar2);
                         options = reader.getAll('foo bar');
                         expect(options.length).toBe(2);
                         expect(options[0].get('value').evaluate()).toBe(40);
+                        expect(options[0].evaluate()).toBe(bar1);
                         expect(options[1].get('value').evaluate()).toBe(50);
+                        expect(options[1].evaluate()).toBe(bar2);
                     });
                     it('should have higher priority for code based options', function () {
                         var codeBased = { foo: [{ value: 40 }, { value: 50 }] };
@@ -183,11 +250,11 @@ System.register(['aurelia-dependency-injection', 'aurelia-pal-browser', './optio
                         expect(options[0].get('value').evaluate()).toBe(40);
                         expect(options[1].get('value').evaluate()).toBe(50);
                     });
-                    it('should throw in case of array item evaluation', function () {
-                        var codeBased = { foo: [{ value: 40 }, { value: 50 }] };
-                        var reader = factory.create({}, getHTMLElement('<m-component></m-component>'), codeBased);
+                    it('should support empty array in undefined option', function () {
+                        var codeBased = {};
+                        var reader = factory.create({ first: 10, second: 20, third: 30 }, getHTMLElement('<m-component></m-component>'), codeBased);
                         var options = reader.get('foo').getAll('bar');
-                        expect(function () { return options[0].evaluate(); }).toThrowError("Array item cannot be evaluated. Only properties are evaluable.");
+                        expect(options.length).toBe(0);
                     });
                     it('should throw in case of attribute', function () {
                         var reader = factory.create({}, getHTMLElement('<m-component><foo value="10"></foo></m-component>'));
